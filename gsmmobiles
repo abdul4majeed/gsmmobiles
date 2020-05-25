@@ -1,0 +1,322 @@
+First File Code 
+
+// ==UserScript==
+// @name         gsmareana
+// @namespace    http://tampermonkey.net/
+// @version      0.1
+// @description  try to take over the world!
+// @author       You
+// @match        https://www.gsmarena.com/makers.php3
+// @require      http://code.jquery.com/jquery-3.4.1.min.js
+// @grant        no
+// ==/UserScript==
+
+let mainCategories = [];
+let mainCategoriesName = [];
+let wind = null;
+function get_link()
+{
+    document.querySelectorAll('.st-text a').forEach((e,i)=>{mainCategories.push('https://www.gsmarena.com/'+e.getAttribute('href'))})
+    document.querySelectorAll('.st-text a').forEach((e,i)=>{mainCategoriesName.push($(e).clone().children().remove().end().text())});
+
+    let i = 116;
+    while(i > 10)
+          {
+          mainCategories.pop();
+              i--;
+}
+    mainCategories.shift();
+    mainCategories.shift();
+    mainCategories.shift();
+    mainCategories.shift();
+    mainCategories.shift();
+    mainCategories.shift();
+    mainCategories.shift();
+    mainCategories.shift();
+        console.log(mainCategories);
+
+}
+
+function open_link()
+{
+    if (mainCategories.length > 0 )
+    {
+        localStorage.setItem('brand',mainCategoriesName.shift());
+        localStorage.setItem('status','mobile_lists');
+       wind = ( window.open (mainCategories.shift(),'_blank') );
+    }
+}
+function check_new_link_to_open()
+{
+    console.log('run funct',wind,mainCategories.length);
+    setTimeout(()=>{
+        if(wind == null && mainCategories.length > 0)
+        {
+            open_link();
+        }
+        else if(mainCategories.length > 0 && wind.parent == null)
+        {
+            open_link();
+        }
+        else
+        {
+            if(mainCategories.length > 0)
+            {
+                console.log('page already open',wind);
+            }
+        }
+        if(mainCategories.length > 0)
+        {
+            check_new_link_to_open();
+        }
+        },1000);
+}
+(function() {
+    'use strict';
+    localStorage.removeItem('brand');
+    localStorage.removeItem('status');
+    localStorage.removeItem('mobile_list')
+    localStorage.removeItem('c');
+    localStorage.removeItem('single_mobile_page')
+    get_link();
+
+    check_new_link_to_open();
+        
+    // Your code here...
+})();
+
+
+Second File Code
+
+// ==UserScript==
+// @name         Mobile Data
+// @namespace    http://tampermonkey.net/
+// @version      0.1
+// @description  try to take over the world!
+// @author       You
+// @match        https://www.gsmarena.com/*.php
+// @grant        no
+// @require      http://code.jquery.com/jquery-3.4.1.min.js
+
+// ==/UserScript==
+
+let mobile_list = localStorage.getItem('mobile_list') == null ? [] : JSON.parse(localStorage.getItem('mobile_list')) ;
+
+function open_link()
+{
+    if (mobile_list.length > 0)
+    {
+            ( window.open (mobile_list.shift(),'_blank') );
+            localStorage.setItem('single_mobile_page',true)
+       localStorage.setItem('mobile_list',JSON.stringify( mobile_list ));
+    }
+}
+
+function openDetailPage()
+{
+    if(localStorage.getItem('status')=='mobile_lists')
+    {
+        console.log('mobile lists');
+         document.querySelectorAll('.makers a').forEach((e)=>{mobile_list.push('https://www.gsmarena.com/'+$(e).attr('href'))})
+        localStorage.setItem('mobile_list',JSON.stringify( mobile_list ))
+        if(document.querySelector('.nav-pages strong') && document.querySelector('.nav-pages strong').nextElementSibling != null)
+        {
+            setTimeout(()=>{document.querySelector('.nav-pages strong').nextElementSibling.click();},1000);
+        }
+        else
+        {
+            localStorage.setItem('status','mobile_single');
+            console.log('all pagination served');
+            window.location.reload();
+        }
+        console.log(mobile_list);
+    }
+    else
+    {
+        console.log('mobile detail page ',mobile_list.length);
+        if(mobile_list.length > 0)
+        {
+            open_link();
+            getMobiles();
+        }
+        
+    }
+}
+
+function getMobiles()
+{
+    if(localStorage.getItem('single_mobile_page') == null)
+    {
+        console.log('open page');
+        openDetailPage();
+    }
+    else
+    {
+        if(mobile_list.length > 0)
+        {
+        setTimeout(()=>{console.log('watch for closing the page');
+        getMobiles();},5000);
+        }
+        else
+        {
+          setTimeout(()=>{window.close()},1000);
+        }
+
+    }
+}
+(function() {
+    'use strict';
+    getMobiles();
+    // Your code here...
+})();
+
+
+
+Thrid File Code
+
+// ==UserScript==
+// @name         Single Item Detials
+// @namespace    http://tampermonkey.net/
+// @version      0.1
+// @description  try to take over the world!
+// @author       You
+// @match        https://www.gsmarena.com/*.php
+// @grant        none
+// @require      http://code.jquery.com/jquery-3.4.1.min.js
+
+// ==/UserScript==
+let mobile_object_holder = localStorage.getItem('c') == null ? [] : JSON.parse(localStorage.getItem('c'));
+let mobile_object = {};
+let brand = null;
+let title = null ;
+let release_date = null;
+let small_spec = null;
+let android_os = null;
+let small_ram = null;
+let screen_size = null;
+let resolution = null;
+let camera_pixel = null;
+let video_pixel = null;
+let ram = null;
+let chipset = null;
+let battery = null;
+let battery_capacity = null;
+let spec_comment = null;
+
+function stringy(stringVar)
+{
+    return stringVar == '' ? 'empty' : stringVar.toLowerCase().replace(' ','_');
+}
+
+(function() {
+    'use strict';
+    if(localStorage.getItem('single_mobile_page')!= null)
+    {
+        mobile_object = {};
+    console.log(mobile_object.brand = localStorage.getItem('brand'));
+    console.log(mobile_object.title = document.getElementsByClassName('specs-phone-name-title')[0].innerText);
+    console.log(mobile_object.release_date = document.getElementsByClassName('icon-launched')[0].nextElementSibling.innerText);
+    console.log(mobile_object.small_spec = document.getElementsByClassName('icon-mobile2')[0].nextElementSibling.innerText);
+    console.log(mobile_object.android_os = document.getElementsByClassName('icon-os')[0].nextElementSibling.innerText);
+    console.log(mobile_object.small_ram = document.getElementsByClassName('icon-sd-card-0')[0].nextElementSibling.innerText);
+    console.log(mobile_object.screen_size = document.querySelector('.help-display .accent').children[0].innerText);
+    console.log(mobile_object.resolution = document.querySelector('.help-display .accent').nextElementSibling.innerText);
+ // console.log(mobile_object.camera_pixel = document.querySelector('.help-camera .accent').children[0].innerText + '' + document.querySelector('.help-camera .accent').children[1].innerText);
+       if(document.querySelector('.help-camera .accent') != null)
+{
+    if(document.querySelector('.help-camera .accent').children.length==2)
+    {
+       mobile_object.battery = document.querySelector('.help-camera .accent').children[0].innerText + '' + document.querySelector('.help-camera .accent').children[1].innerText;
+    }
+    else if(document.querySelector('.help-camera .accent').children.length==1)
+    {
+       mobile_object.battery = document.querySelector('.help-camera .accent').children[0].innerText ;
+    }
+    else
+    {
+       mobile_object.battery = "";
+    }
+}
+
+        console.log(mobile_object.video_pixel = document.querySelector('.help-camera .accent').nextElementSibling.innerText);
+    console.log(mobile_object.ram = document.querySelector('.help-expansion .accent') != null ?
+                document.querySelector('.help-expansion .accent').children[0] != null ?
+                document.querySelector('.help-expansion .accent').children[0].innerText : '' + '' +
+                document.querySelector('.help-expansion .accent').children[1] != null ?
+                document.querySelector('.help-expansion .accent').children[1].innerText : '' : '');
+    console.log(mobile_object.chipset = document.querySelector('.help-expansion .accent').nextElementSibling.innerText);
+
+
+    if(document.querySelector('.help-battery .accent') != null)
+{
+    if(document.querySelector('.help-battery .accent').children.length>0)
+    {
+       mobile_object.battery = document.querySelector('.help-battery .accent').children[0].innerText + '' + document.querySelector('.help-battery .accent').children[1].innerText;
+    }
+    else
+    {
+       mobile_object.battery = "";
+    }
+}
+
+    console.log(mobile_object.battery_capacity = document.querySelector('.help-battery .accent').nextElementSibling.innerText);
+    console.log(mobile_object.spec_comment = document.querySelector('#specs-list p') != null ?
+                document.querySelector('#specs-list p').innerText == null ? '' : document.querySelector('#specs-list p').innerText : '');
+
+     let pointer = false;
+    let swap = true;
+    let first = null;
+    let second = null;
+    let listLength = $('#specs-list table tbody').length ;//;- $('#specs-list table tbody').length + 2;
+for(let i = 0; i<listLength;i++)
+{
+    pointer = false;
+    swap = true;
+    for(let k of Array.from( $($($($('#specs-list table tbody'))[i]).find('tr td'))))
+               {
+
+                    if(!pointer)
+                    {
+                   console.log('in if',$(k).parent().find('th').text(),($(k)).text().trim(),($(k)).text().trim());
+                        first = $(k).parent().find('th').text() != '' ? $(k).parent().find('th').text() : first;
+                        second = ($(k)).text().trim();
+                        first = stringy(first);
+                        second = stringy(second)
+                        mobile_object[first] = {};
+                        mobile_object[first][second] = {};
+                        console.log( JSON.parse(JSON.stringify(mobile_object)));
+                    pointer = true;
+                    }
+else
+{
+    console.log('in else');
+    if(swap)
+    {
+        console.log('in swap',($(k)).text().trim());
+        first = stringy(first);
+                        second = stringy(second)
+                            mobile_object[first][second] = {};
+    mobile_object[first][second] = (i,($(k)).text().trim());
+        swap = false;
+    }
+    else
+    {
+        console.log('in swap else',($(k)).text().trim());
+        second = (i,($(k)).text().trim());
+        swap = true;
+        console.log('ffffffff',second);
+        first = stringy(first);
+                        second = stringy(second)
+    }
+}
+               }
+
+};
+    mobile_object_holder.push(mobile_object);
+    // Your code here...
+    localStorage.setItem('c',JSON.stringify(mobile_object_holder));
+    console.log(mobile_object);
+ setTimeout(()=>{localStorage.removeItem('single_mobile_page');window.close()},1000);
+    }
+    
+})();
