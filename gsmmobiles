@@ -1,4 +1,4 @@
-First File Code 
+First File 
 
 // ==UserScript==
 // @name         gsmareana
@@ -13,26 +13,25 @@ First File Code
 
 let mainCategories = [];
 let mainCategoriesName = [];
-let wind = null;
 function get_link()
 {
     document.querySelectorAll('.st-text a').forEach((e,i)=>{mainCategories.push('https://www.gsmarena.com/'+e.getAttribute('href'))})
     document.querySelectorAll('.st-text a').forEach((e,i)=>{mainCategoriesName.push($(e).clone().children().remove().end().text())});
 
     let i = 116;
-    while(i > 10)
+    while(i > 1)
           {
           mainCategories.pop();
               i--;
 }
+   /* mainCategories.shift();
     mainCategories.shift();
     mainCategories.shift();
     mainCategories.shift();
     mainCategories.shift();
     mainCategories.shift();
     mainCategories.shift();
-    mainCategories.shift();
-    mainCategories.shift();
+    mainCategories.shift();*/
         console.log(mainCategories);
 
 }
@@ -43,50 +42,68 @@ function open_link()
     {
         localStorage.setItem('brand',mainCategoriesName.shift());
         localStorage.setItem('status','mobile_lists');
-       wind = ( window.open (mainCategories.shift(),'_blank') );
+        localStorage.setItem('brand_window_open',true);
+       ( window.open (mainCategories.shift(),'_blank') );
     }
 }
 function check_new_link_to_open()
 {
-    console.log('run funct',wind,mainCategories.length);
+    //nsole.log('here');
     setTimeout(()=>{
-        if(wind == null && mainCategories.length > 0)
+        if(!JSON.parse(localStorage.getItem('brand_window_open')) && mainCategories.length > 0)
         {
             open_link();
-        }
-        else if(mainCategories.length > 0 && wind.parent == null)
-        {
-            open_link();
+            check_new_link_to_open();
         }
         else
         {
-            if(mainCategories.length > 0)
+            if(mainCategories.length > 0 && JSON.parse(localStorage.getItem('brand_window_open')))
             {
-                console.log('page already open',wind);
+              //console.log('page already open',mainCategories.length );
+                 check_new_link_to_open();
             }
         }
-        if(mainCategories.length > 0)
-        {
-            check_new_link_to_open();
-        }
+       
         },1000);
 }
 (function() {
+    let timer_duration = 1000;
     'use strict';
-    localStorage.removeItem('brand');
+    setTimeout(()=>{console.log('remove all localStorage')
+                   localStorage.removeItem('brand');
     localStorage.removeItem('status');
     localStorage.removeItem('mobile_list')
     localStorage.removeItem('c');
     localStorage.removeItem('single_mobile_page')
-    get_link();
+    localStorage.removeItem('brand_window_open')
+    localStorage.removeItem('single_mobile_page_pictures');
+    localStorage.removeItem('pics_get');
 
-    check_new_link_to_open();
+
+
+                     setTimeout(()=>{
+                         console.log('get licnks started');
+                         get_link();
+
+                         setTimeout(()=>{
+                             console.log('check_new_link_to_open');
+                             check_new_link_to_open();
+                         },timer_duration);
+
+                     },timer_duration);
+                   },timer_duration);
+
+
+
+
+
+
         
     // Your code here...
 })();
 
 
-Second File Code
+Second File
 
 // ==UserScript==
 // @name         Mobile Data
@@ -145,34 +162,57 @@ function openDetailPage()
 
 function getMobiles()
 {
-    if(localStorage.getItem('single_mobile_page') == null)
-    {
-        console.log('open page');
-        openDetailPage();
-    }
-    else
-    {
-        if(mobile_list.length > 0)
+    setTimeout(()=>{
+
+        if(!JSON.parse(localStorage.getItem('single_mobile_page_pictures')))
         {
-        setTimeout(()=>{console.log('watch for closing the page');
-        getMobiles();},5000);
+            console.log('in get mobile method',localStorage.getItem('single_mobile_page'));
+
+            if(localStorage.getItem('single_mobile_page') == null)
+            {
+                console.log('if open page');
+                openDetailPage();
+            }
+            else
+            {
+                console.log('else');
+                if(mobile_list.length > 0)
+                {
+                    setTimeout(()=>{console.log('watch for closing the page');
+                                    getMobiles();},5000);
+                }
+                else
+                {
+                    setTimeout(()=>{localStorage.removeItem('brand_window_open');window.close();},1000);
+                }
+
+            }
         }
         else
         {
-          setTimeout(()=>{window.close()},1000);
+            console.log('picture page is open');
+            getMobiles();
         }
-
-    }
+    },1000);
 }
 (function() {
+
+
+
     'use strict';
-    getMobiles();
-    // Your code here...
+
+
+
+
+    setTimeout(()=>{
+    console.log('getting mobile phones');
+        getMobiles();
+    },1000);
+
 })();
 
 
-
-Thrid File Code
+Third File
 
 // ==UserScript==
 // @name         Single Item Detials
@@ -208,11 +248,10 @@ function stringy(stringVar)
     return stringVar == '' ? 'empty' : stringVar.toLowerCase().replace(' ','_');
 }
 
-(function() {
-    'use strict';
-    if(localStorage.getItem('single_mobile_page')!= null)
-    {
-        mobile_object = {};
+function start_fetch()
+{
+
+    mobile_object = {};
     console.log(mobile_object.brand = localStorage.getItem('brand'));
     console.log(mobile_object.title = document.getElementsByClassName('specs-phone-name-title')[0].innerText);
     console.log(mobile_object.release_date = document.getElementsByClassName('icon-launched')[0].nextElementSibling.innerText);
@@ -221,22 +260,24 @@ function stringy(stringVar)
     console.log(mobile_object.small_ram = document.getElementsByClassName('icon-sd-card-0')[0].nextElementSibling.innerText);
     console.log(mobile_object.screen_size = document.querySelector('.help-display .accent').children[0].innerText);
     console.log(mobile_object.resolution = document.querySelector('.help-display .accent').nextElementSibling.innerText);
+    mobile_object.images = {};
+    mobile_object.images['url1'] = document.querySelector('.specs-photo-main img').getAttribute('src');
  // console.log(mobile_object.camera_pixel = document.querySelector('.help-camera .accent').children[0].innerText + '' + document.querySelector('.help-camera .accent').children[1].innerText);
        if(document.querySelector('.help-camera .accent') != null)
-{
-    if(document.querySelector('.help-camera .accent').children.length==2)
-    {
-       mobile_object.battery = document.querySelector('.help-camera .accent').children[0].innerText + '' + document.querySelector('.help-camera .accent').children[1].innerText;
-    }
-    else if(document.querySelector('.help-camera .accent').children.length==1)
-    {
-       mobile_object.battery = document.querySelector('.help-camera .accent').children[0].innerText ;
-    }
-    else
-    {
-       mobile_object.battery = "";
-    }
-}
+       {
+           if(document.querySelector('.help-camera .accent').children.length==2)
+           {
+               mobile_object.battery = document.querySelector('.help-camera .accent').children[0].innerText + '' + document.querySelector('.help-camera .accent').children[1].innerText;
+           }
+           else if(document.querySelector('.help-camera .accent').children.length==1)
+           {
+               mobile_object.battery = document.querySelector('.help-camera .accent').children[0].innerText ;
+           }
+           else
+           {
+               mobile_object.battery = "";
+           }
+       }
 
         console.log(mobile_object.video_pixel = document.querySelector('.help-camera .accent').nextElementSibling.innerText);
     console.log(mobile_object.ram = document.querySelector('.help-expansion .accent') != null ?
@@ -316,7 +357,85 @@ else
     // Your code here...
     localStorage.setItem('c',JSON.stringify(mobile_object_holder));
     console.log(mobile_object);
- setTimeout(()=>{localStorage.removeItem('single_mobile_page');window.close()},1000);
+    fetch_images();
+ //
     }
+
+function fetch_images()
+{
+    if(document.querySelector('.article-info-meta-link a') && localStorage.getItem('single_mobile_page_pictures')== null)
+    {
+        if(document.querySelector('.article-info-meta-link a').innerText == "PICTURES")
+        {
+            localStorage.setItem('single_mobile_page_pictures',true);
+            document.querySelector('.article-info-meta-link a').click();
+        }
+        else
+        {
+            setTimeout(()=>{
+                console.log('there is no pictures for this mobile');
+                setTimeout(()=>{localStorage.removeItem('single_mobile_page_pictures');localStorage.removeItem('single_mobile_page');window.close()},1000);
+            },5000);
+        }
+    }
+    else
+    {
+        setTimeout(()=>{
+            console.log('waiting for pic to close');
+               // setTimeout(()=>{localStorage.removeItem('single_mobile_page_pictures');localStorage.removeItem('single_mobile_page');window.close()},1000);
+            fetch_images();
+        },1000);
+    }
+}
+(function() {
+    'use strict';
+    setTimeout(()=>{
+        if(localStorage.getItem('single_mobile_page')!= null && localStorage.getItem('single_mobile_page_pictures')== null)
+        {
+            console.log('feteching single mobile record + go for images');
+            start_fetch();
+        }
+    },1000);
+
     
+    
+    
+})();
+
+
+Fourth File
+
+// ==UserScript==
+// @name         MobilePhonePics
+// @namespace    http://tampermonkey.net/
+// @version      0.1
+// @description  try to take over the world!
+// @author       You
+// @match        https://www.gsmarena.com/*.php
+// @grant        none
+// ==/UserScript==
+
+
+(function() {
+    'use strict';
+    if(JSON.parse(localStorage.getItem('single_mobile_page_pictures')) == true)
+    {
+        let data = JSON.parse(localStorage.getItem('c'))[JSON.parse(localStorage.getItem('c')).length-1];
+        document.querySelectorAll('#pictures-list img').forEach((e,i)=>{
+
+            data.images['url'+ (i + 2)] = e.getAttribute('src');
+
+        });
+
+        let final_data = JSON.parse(localStorage.getItem('c'));
+        final_data[final_data.length-1] = data;
+
+        localStorage.setItem('c',JSON.stringify(final_data));
+
+        localStorage.removeItem('single_mobile_page_pictures');
+        localStorage.removeItem('single_mobile_page');
+
+        window.close();
+    }
+    // Your code here...
 })();
